@@ -30,8 +30,13 @@
 (defclass window (nbox:nbox-item)
   ())
 
-;; Variables
+(defclass tile-window (window)
+  ())
 
+(defclass float-window (window)
+  ())
+
+;; Variables
 (defparameter *desktop* (make-instance 'desktop))
 
 (defparameter *empty-screen* (make-instance 'screen))
@@ -43,14 +48,15 @@
 (defparameter *empty-frame* (make-instance 'frame))
 (defparameter *frame* (make-instance 'frame))
 
-(defparameter *window1* (make-instance 'window))
-(defparameter *window2* (make-instance 'window))
-(defparameter *window3* (make-instance 'window))
-(defparameter *window4* (make-instance 'window))
+(defparameter *window1* (make-instance 'float-window))
+(defparameter *window2* (make-instance 'float-window))
+(defparameter *window3* (make-instance 'tile-window))
+(defparameter *window4* (make-instance 'tile-window))
 
-(defparameter *nested-box-root* *desktop*)
+;; Will be change to *desktop* in tests
+(defparameter *nested-box-root* (make-instance 'desktop))
 
-;; Register as ROOT
+;; Register *nested-box-root* as ROOT
 (nbox:nbox-root '*nested-box-root*)
 
 (def-suite :nested-box)
@@ -60,19 +66,60 @@
 
 (in-suite :nested-box)
 
-(test nested-box-root
-  (is-false (eq *nested-box-root* nbox::*nbox-root*))
-  (is (eq *nested-box-root* (nbox:item-wrapper nil))))
+(test nbox-root
+  ;; Assign *desktop* as ROOT
+  (setf (nbox:item-wrapper nil) *desktop*)
+  (is (eq *desktop* (nbox:item-wrapper nil)))
+  (is (eq *desktop* (nbox:current-item nil)))
+  (is (eq *nested-box-root* (nbox:item-wrapper nil)))
+  (is (eq *nested-box-root* (nbox:current-item nil)))
+  (is-false (eq *nested-box-root* nbox::*nbox-root*)))
 
-(test populate-nested-box
+(test populate-with-nil
+  ;; Add item x into ROOT
   (nbox:add-item *empty-screen* nil)
   (nbox:add-item *screen* nil)
-  (is (= 2 (length (nbox:list-items nil))))
-  (is (eq *desktop* (nbox:item-wrapper *screen*)))
-  (is (eq *screen* (nbox:current-item nil)))
-  (let ((items (nbox:list-items nil)))
-    (is (eq *screen* (first items)))
-    (is (eq *empty-screen* (second items))))
-  (nbox:move-item *screen* 1)
-  (is-false (eq *screen* (nbox:current-item nil)))
-  (nbox:move-item *screen* 0))
+  (is (= 2 (length (nbox:list-items nil)))))
+
+(test populate-with-keyword
+  ;; Add item x into current y
+  (nbox:add-item *empty-group* :screen)
+  (nbox:add-item *group* :screen)
+  (nbox:add-item *empty-frame* :group)
+  (nbox:add-item *frame* :group)
+  (nbox:add-item *window1* :frame)
+  (nbox:add-item *window2* :frame)
+  (nbox:add-item *window3* :frame)
+  (nbox:add-item *window4* :frame)
+  (is (= 2 (length (nbox:list-items :desktop))))
+  (is (= 2 (length (nbox:list-items :screen))))
+  (is (= 2 (length (nbox:list-items :group))))
+  (is (= 4 (length (nbox:list-items :frame)))))
+
+(test nil-behavior
+  (is (eql (nbox:list-items nil) (nbox:list-items *desktop*)))
+  (is (eql (nbox:item-type nil) (nbox:item-type *desktop*)))
+  (is (eql (nbox:item-wrapper nil) *desktop*))
+  (is (eql (nbox:current-item nil) *desktop*)))
+
+(test keyword-behavior
+  (is (eql (nbox:list-items :desktop) (nbox:list-items nil)))
+  (is (eql (nbox:list-items :screen) (nbox:list-items *screen*)))
+  (is (eql (nbox:list-items :group) (nbox:list-items *group*)))
+  (is (eql (nbox:list-items :frame) (nbox:list-items *frame*)))
+  (is (eql (nbox:current-item :screen) *screen*))
+  (nbox:move-item :screen -1) ; move current screen to last
+  (is-false (eql (nbox:current-item :screen) *screen*))
+  (nbox:add-item (make-instance 'group) :screen)
+  (nbox:add-item (make-instance 'group) :screen)
+  (nbox:add-item (make-instance 'group) :screen)
+  (nbox:add-item (make-instance 'group) :screen)
+  (nbox:add-item (make-instance 'group) :screen)
+  (is (eql 5 (length (nbox:list-items :screen))))
+  (nbox:remove-item :group :screen)
+  (is (eql 4 (length (nbox:list-items :screen))))
+  (nbox:clear-items :screen)
+  (is (eql 0 (length (nbox:list-items :screen))))
+  (nbox:move-item *screen* 0) ; move *screen* to first
+  ;; Try access windows within old screen
+  (is (eql 4 (length (nbox:list-items :frame)))))
