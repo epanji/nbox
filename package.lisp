@@ -1,6 +1,4 @@
 ;;;; package.lisp
-;;
-;;;; Copyright (c) 2020 Panji Kusuma <epanji@gmail.com>
 
 (defpackage #:nbox
   (:nicknames #:nested-box)

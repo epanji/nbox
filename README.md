@@ -1,13 +1,26 @@
-# nested-box
-### _Panji Kusuma <epanji@gmail.com>_
+# NBOX: Nested Box
 
-This is a project to do ... something.
+This system is made with purpose to be used by other system that need basic functionality with nested box as container or wrapper. You could look at this [file](nbox-tests.lisp) for further information.
 
-## License
+Author: _Panji Kusuma <epanji@gmail.com>_
 
-Specify license here
+## Tests
 
+``` common-lisp
+(asdf:test-system "nbox")
 
-Copyright (c) 2020 Panji Kusuma <epanji@gmail.com>
+Running test suite NESTED-BOX
+ Running test NBOX-ROOT .....
+ Running test POPULATE-WITH-NIL .
+ Running test POPULATE-WITH-KEYWORD ....
+ Running test NIL-BEHAVIOR ....
+ Running test KEYWORD-BEHAVIOR ..........
+ Did 24 checks.
+    Pass: 24 (100%)
+    Skip: 0 ( 0%)
+    Fail: 0 ( 0%)
+```
 
+## license
 
+Public Domain
